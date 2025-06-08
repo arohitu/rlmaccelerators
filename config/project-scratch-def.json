@@ -1,7 +1,12 @@
 {
   "orgName": "RLM Adv Approval",
   "edition": "Developer",
-  "features": ["EnableSetPasswordInApi"],
+  "features": [
+    "EnableSetPasswordInApi",
+    "CoreCpq",
+    "OrderSaveLogicEnabled",
+    "OrderSaveBehaviorBoth"
+  ],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
@@ -11,6 +16,9 @@
     },
     "quoteSettings": {
       "enableQuote" : true
+    },
+    "revenueManagementSettings": {
+      "enableCoreCPQ": true
     }
   }
 }

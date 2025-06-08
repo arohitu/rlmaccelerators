@@ -162,7 +162,7 @@
             <inputParameters>
                 <name>ActionInput__ApprovalChainName</name>
                 <value>
-                    <elementReference>SampleChainName</elementReference>
+                    <stringValue>Finance</stringValue>
                 </value>
             </inputParameters>
             <inputParameters>
@@ -297,7 +297,7 @@
         <isInput>false</isInput>
         <isOutput>false</isOutput>
         <value>
-            <stringValue>Sample</stringValue>
+            <stringValue>Finance</stringValue>
         </value>
     </variables>
     <variables>
