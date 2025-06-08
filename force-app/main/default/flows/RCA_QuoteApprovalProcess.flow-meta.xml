@@ -40,8 +40,8 @@
         </rules>
     </decisions>
     <environments>Default</environments>
-    <interviewLabel>Business Unit Deal Desk {!$Flow.CurrentDateTime}</interviewLabel>
-    <label>Quote - Approval - Business Unit Deal Desk</label>
+    <interviewLabel>Quote Approval Process {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Quote Approval Process</label>
     <orchestratedStages>
         <description>Get the Quote record with all it&apos;s fields</description>
         <name>Get_Quote_Record</name>

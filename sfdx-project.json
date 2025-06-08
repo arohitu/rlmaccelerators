@@ -6,7 +6,8 @@
       "path": "force-app",
       "default": true,
       "package": "RLMAdvApprovalStarter",
-      "versionDescription": "RLM Adv Approval Starter"
+      "versionDescription": "RLM Adv Approval Starter",
+      "definitionFile": "config/project-scratch-def.json"
     }
   ],
   "name": "rlmaccelerators",

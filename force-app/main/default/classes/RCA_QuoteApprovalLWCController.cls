@@ -8,11 +8,11 @@
  * @date:          June 6, 2025
  *
  * @see rca_invokeQuoteApproval LWC
- * @see RCA_QuoteApprovalBusinessUnitDealDesk Flow
+ * @see RCA_QuoteApprovalProcess Flow
  */
 public with sharing class RCA_QuoteApprovalLWCController {
 
-    private static final String DEFAULT_APPROVAL_FLOW_API_NAME = 'RCA_QuoteApprovalBusinessUnitDealDesk';
+    private static final String DEFAULT_APPROVAL_FLOW_API_NAME = 'RCA_QuoteApprovalProcess';
 
     /**
      * @description:     Accepts a Quote ID and user comments from the LWC, then invokes the

@@ -1,5 +1,5 @@
 {
-  "orgName": "rohit.radhakrishnan company",
+  "orgName": "RLM Adv Approval",
   "edition": "Developer",
   "features": ["EnableSetPasswordInApi"],
   "settings": {
@@ -8,6 +8,9 @@
     },
     "mobileSettings": {
       "enableS1EncryptedStoragePref2": false
+    },
+    "quoteSettings": {
+      "enableQuote" : true
     }
   }
 }
