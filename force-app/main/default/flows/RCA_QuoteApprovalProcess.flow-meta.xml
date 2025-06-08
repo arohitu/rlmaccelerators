@@ -52,9 +52,6 @@
             <targetReference>Send_for_Approval</targetReference>
         </connector>
         <exitConditionLogic>and</exitConditionLogic>
-        <faultConnector>
-            <targetReference>Handle_Evaluation_Faults</targetReference>
-        </faultConnector>
         <stageSteps>
             <description>Retrieve the Quote record using the Quote Record Id that was passed to the flow</description>
             <name>Get_Quote_Record_for_the_Record_Id</name>
@@ -95,134 +92,6 @@
                 </value>
             </inputParameters>
             <label>Set Quote Status</label>
-            <requiresAsyncProcessing>false</requiresAsyncProcessing>
-            <runAsUser>false</runAsUser>
-            <shouldLock>false</shouldLock>
-            <stepSubtype>BackgroundStep</stepSubtype>
-        </stageSteps>
-    </orchestratedStages>
-    <orchestratedStages>
-        <name>Handle_Approval_Submission_Exception</name>
-        <label>Handle Approval Submission Exception</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <exitConditionLogic>and</exitConditionLogic>
-        <stageSteps>
-            <name>Assign_Submission_Faults</name>
-            <actionName>RCA_ApprovalFlowFaultHandling</actionName>
-            <actionType>stepBackground</actionType>
-            <canAssigneeEdit>false</canAssigneeEdit>
-            <entryConditionLogic>and</entryConditionLogic>
-            <exitConditionLogic>and</exitConditionLogic>
-            <inputParameters>
-                <name>flowErrorMessage</name>
-                <value>
-                    <elementReference>$Flow.FaultMessage</elementReference>
-                </value>
-            </inputParameters>
-            <inputParameters>
-                <name>wasFlowSuccessful</name>
-                <value>
-                    <booleanValue>false</booleanValue>
-                </value>
-            </inputParameters>
-            <label>Assign Submission Faults</label>
-            <requiresAsyncProcessing>false</requiresAsyncProcessing>
-            <runAsUser>false</runAsUser>
-            <shouldLock>false</shouldLock>
-            <stepSubtype>BackgroundStep</stepSubtype>
-        </stageSteps>
-    </orchestratedStages>
-    <orchestratedStages>
-        <name>Handle_Approve_Update_Fault</name>
-        <label>Handle Approve Update Fault</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <exitConditionLogic>and</exitConditionLogic>
-        <stageSteps>
-            <name>Assign_Approve_Update_Faults</name>
-            <actionName>RCA_ApprovalFlowFaultHandling</actionName>
-            <actionType>stepBackground</actionType>
-            <canAssigneeEdit>false</canAssigneeEdit>
-            <entryConditionLogic>and</entryConditionLogic>
-            <exitConditionLogic>and</exitConditionLogic>
-            <inputParameters>
-                <name>flowErrorMessage</name>
-                <value>
-                    <elementReference>$Flow.FaultMessage</elementReference>
-                </value>
-            </inputParameters>
-            <inputParameters>
-                <name>wasFlowSuccessful</name>
-                <value>
-                    <booleanValue>false</booleanValue>
-                </value>
-            </inputParameters>
-            <label>Assign Approve Update Faults</label>
-            <requiresAsyncProcessing>false</requiresAsyncProcessing>
-            <runAsUser>false</runAsUser>
-            <shouldLock>false</shouldLock>
-            <stepSubtype>BackgroundStep</stepSubtype>
-        </stageSteps>
-    </orchestratedStages>
-    <orchestratedStages>
-        <name>Handle_Evaluation_Faults</name>
-        <label>Handle Evaluation Faults</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <exitConditionLogic>and</exitConditionLogic>
-        <stageSteps>
-            <name>Assign_Evaluation_Flow_Messages</name>
-            <actionName>RCA_ApprovalFlowFaultHandling</actionName>
-            <actionType>stepBackground</actionType>
-            <canAssigneeEdit>false</canAssigneeEdit>
-            <entryConditionLogic>and</entryConditionLogic>
-            <exitConditionLogic>and</exitConditionLogic>
-            <inputParameters>
-                <name>flowErrorMessage</name>
-                <value>
-                    <elementReference>$Flow.FaultMessage</elementReference>
-                </value>
-            </inputParameters>
-            <inputParameters>
-                <name>wasFlowSuccessful</name>
-                <value>
-                    <booleanValue>false</booleanValue>
-                </value>
-            </inputParameters>
-            <label>Assign Evaluation Flow Messages</label>
-            <requiresAsyncProcessing>false</requiresAsyncProcessing>
-            <runAsUser>false</runAsUser>
-            <shouldLock>false</shouldLock>
-            <stepSubtype>BackgroundStep</stepSubtype>
-        </stageSteps>
-    </orchestratedStages>
-    <orchestratedStages>
-        <name>Handle_Reject_Update_Fault</name>
-        <label>Handle Reject Update Fault</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <exitConditionLogic>and</exitConditionLogic>
-        <stageSteps>
-            <name>Assign_Rejectl_Update_Faults</name>
-            <actionName>RCA_ApprovalFlowFaultHandling</actionName>
-            <actionType>stepBackground</actionType>
-            <canAssigneeEdit>false</canAssigneeEdit>
-            <entryConditionLogic>and</entryConditionLogic>
-            <exitConditionLogic>and</exitConditionLogic>
-            <inputParameters>
-                <name>flowErrorMessage</name>
-                <value>
-                    <elementReference>$Flow.FaultMessage</elementReference>
-                </value>
-            </inputParameters>
-            <inputParameters>
-                <name>wasFlowSuccessful</name>
-                <value>
-                    <booleanValue>false</booleanValue>
-                </value>
-            </inputParameters>
-            <label>Assign Reject Update Faults</label>
             <requiresAsyncProcessing>false</requiresAsyncProcessing>
             <runAsUser>false</runAsUser>
             <shouldLock>false</shouldLock>
@@ -271,18 +140,15 @@
             <targetReference>Approval_Decision</targetReference>
         </connector>
         <exitConditionLogic>and</exitConditionLogic>
-        <faultConnector>
-            <targetReference>Handle_Approval_Submission_Exception</targetReference>
-        </faultConnector>
         <stageSteps>
             <name>Approve</name>
             <actionName>standard_approvals__EvaluateApproval</actionName>
             <actionType>stepApproval</actionType>
             <assignees>
                 <assignee>
-                    <stringValue>rohit.rca@myrcaorg.com.dev</stringValue>
+                    <stringValue>RCA_QuoteApprovers</stringValue>
                 </assignee>
-                <assigneeType>User</assigneeType>
+                <assigneeType>Queue</assigneeType>
             </assignees>
             <canAssigneeEdit>true</canAssigneeEdit>
             <entryConditionLogic>and</entryConditionLogic>
@@ -312,9 +178,6 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <exitConditionLogic>and</exitConditionLogic>
-        <faultConnector>
-            <targetReference>Handle_Approve_Update_Fault</targetReference>
-        </faultConnector>
         <stageSteps>
             <name>Set_Quote_Status_Approved</name>
             <actionName>RCA_QuoteApprovalUpdateQuoteStatus</actionName>
@@ -347,9 +210,6 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <exitConditionLogic>and</exitConditionLogic>
-        <faultConnector>
-            <targetReference>Handle_Reject_Update_Fault</targetReference>
-        </faultConnector>
         <stageSteps>
             <name>Set_Quote_Status_Rejected</name>
             <actionName>RCA_QuoteApprovalUpdateQuoteStatus</actionName>
@@ -411,13 +271,13 @@
     </start>
     <status>Active</status>
     <variables>
-        <name>flowErrorMessage</name>
+        <name>QueueReference</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
-        <isInput>true</isInput>
-        <isOutput>true</isOutput>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
         <value>
-            <elementReference>Assign_Evaluation_Flow_Messages.Outputs.flowErrorMessage</elementReference>
+            <stringValue>RCA_QuoteApprovers</stringValue>
         </value>
     </variables>
     <variables>
@@ -440,15 +300,5 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
-    </variables>
-    <variables>
-        <name>wasFlowSuccessful</name>
-        <dataType>Boolean</dataType>
-        <isCollection>false</isCollection>
-        <isInput>true</isInput>
-        <isOutput>true</isOutput>
-        <value>
-            <elementReference>Assign_Evaluation_Flow_Messages.Outputs.wasFlowSuccessful</elementReference>
-        </value>
     </variables>
 </Flow>
