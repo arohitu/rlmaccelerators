@@ -161,6 +161,9 @@
             </inputParameters>
             <inputParameters>
                 <name>ActionInput__ApprovalChainName</name>
+                <value>
+                    <elementReference>SampleChainName</elementReference>
+                </value>
             </inputParameters>
             <inputParameters>
                 <name>ActionInput__CanUseSmartApproval</name>
@@ -286,6 +289,16 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>SampleChainName</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <stringValue>Sample</stringValue>
+        </value>
     </variables>
     <variables>
         <name>submissionComments</name>
