@@ -7,7 +7,7 @@
       "default": true,
       "package": "RLMAdvApprovalStarter",
       "versionDescription": "RLM Adv Approval Starter",
-      "definitionFile": "config/project-scratch-def.json"
+      "definitionFile": "config/project-scratch-def-rc-base.json"
     }
   ],
   "name": "rlmaccelerators",
@@ -17,6 +17,7 @@
   "packageAliases": {
     "RLMAdvApprovalStarter": "0Hod20000000FyLCAU",
     "RLMAdvApprovalStarter@0.1.0-1": "04td20000004zbBAAQ",
-    "RLMAdvApprovalStarter@0.1.0-2": "04td200000050dhAAA"
+    "RLMAdvApprovalStarter@0.1.0-2": "04td200000050dhAAA",
+    "RLMAdvApprovalStarter@0.1.0-3": "04td200000050fJAAQ"
   }
 }
