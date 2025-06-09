@@ -1,6 +1,6 @@
 # **Kickstart Approval Process Framework**
 
-**Version:** 1.0.2
+**Version:** 1.0.3
 
 [**Installation in Production**](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
 
