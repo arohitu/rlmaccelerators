@@ -45,7 +45,7 @@ Everything here has shipped in the real world; everything here still evolves.
 
 _That’s it. No CLI. No scratch‑org gymnastics._
 
-> **Dependencies:** If a package relies on CPQ, B2B Commerce, or another managed package, ensure it’s installed **first**. The install link will fail otherwise.
+> **Dependencies:** Enable Revenue Cloud in the target org and make sure you have required licenses.
 
 ---
 
@@ -53,7 +53,7 @@ _That’s it. No CLI. No scratch‑org gymnastics._
 
 | Accelerator | Version | Install Link | Docs |
 | ----------- | ------- | ------------ | ---- |
-| RCA Approvals  | ![version](https://img.shields.io/static/v1?label=latest&message=1.4.0&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ) | [/docs/usage-metrics](rca-approval/main/default/AdvApproval.md) |
+| RCA Approvals  | ![version](https://img.shields.io/static/v1?label=latest&message=1.0.3&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ) | [/rca-approval/main/default/README.md](rca-approval/main/default/README.md) |
 
 ---
 

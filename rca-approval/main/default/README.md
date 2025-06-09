@@ -2,9 +2,9 @@
 
 **Version:** 1.0.2
 
-[**Installation in Production:**](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
+[**Installation in Production**](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
 
-[**Installation in Sandbox:**](https://test.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
+[**Installation in Sandbox**](https://test.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
 
 ## **1\. Overview**
 
@@ -46,17 +46,14 @@ The core of the process is driven by a powerful Orchestration Flow, making the b
 
 To ensure the package functions correctly after installation, please follow these streamlined steps.
 
-### **Step 1: Create the Approval Queue**
+### **Step 1: Add users to the Approval Queue**
 
 The approval flow is configured to assign requests to a specific queue. This queue must be created manually.
 
 1. Navigate to **Setup > Users > Queues**.
-2. Click **New**.
-3. **Label:** RCA Quote Approvers
-4. **Queue Name (API Name):** RCA_QuoteApprovers (This must be exact).
-5. In the "Supported Objects" section, find **Quote** and add it to the "Selected Objects" list.
-6. Add the appropriate users as Queue Members.
-7. Save the queue.
+2. Click **RCA Quote Approvers**.
+3. Add the appropriate users as Queue Members.
+4. Save the queue.
 
 ### **Step 2: Configure User Permissions**
 
@@ -76,31 +73,33 @@ Users who need to submit quotes for approval require access to the package compo
 2. You will see the three new flows from the package: Quote Approval Process, Quote - Approval - Update Quote Status, and Quote - Get Quote Record.
 3. Open each one, review its logic to ensure it meets your business needs, and click **Activate**. All three flows must be active for the process to work.
 
-### **Step 4: Create and Place the Quick Action**
+### **Step 4: Place the Quick Action**
 
 This final step makes the process visible to your users on the Quote record page.
 
-1. **Create the Quick Action:**
-    - Navigate to **Setup > Object Manager > Quote > Buttons, Links, and Actions**.
-    - Click **New Action**.
-    - **Action Type:** Lightning Web Component.
-    - **Lightning Web Component:** Select c:rca_invokeQuoteApproval.
-    - **Label:** Submit for Approval
-    - **Name:** Submit_for_Approval
-    - Save the action.
-2. **Add the Action to the Page Layout:**
+1. **Add the Submit for Approval Action to the Page Layout:**
     - Navigate to **Setup > Object Manager > Quote > Page Layouts**.
     - Select the page layout you wish to modify.
     - In the palette at the top, select **Mobile & Lightning Actions**.
     - Find your new "Submit for Approval" action and drag it into the "Salesforce Mobile and Lightning Experience Actions" section at the top of the layout.
     - Save the page layout.
 
-### **Step 5: Test the Process**
+### **Step 5: Add Approval components**
+
+1. Edit the quote record page **Setup > Object Manager > Quote > Lightning Receord Page**.
+2. Edit the lightning page used in your org.
+3. Create a new tab `Approvals` in the quote page.
+3. Add the below components to the Approvals tab.
+   - Flow Orchestration Work Guide
+   - Approval Trace
+
+### **Step 6: Test the Process**
 
 1. Log in as a user with the Permission Set you configured.
 2. Navigate to a test Quote record.
 3. Click the "Submit for Approval" button.
 4. Enter a comment and click "Submit".
-5. Verify that the Quote's status changes to "In Review" and that the record is submitted for approval (you can check this under the "Approval History" related list).
+5. Verify that the Quote's status changes to "In Review" and that the record is submitted for approval 
+   (you can check this under the "Approval" tab on the quote page).
 
 Your Kickstart Approval Process is now fully configured and ready to use!
