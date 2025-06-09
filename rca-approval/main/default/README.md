@@ -22,19 +22,12 @@ The core of the process is driven by a powerful Orchestration Flow, making the b
 ## **3\. Components Included**
 
 | **Component Type** | **Component Name** | **Description** |
-| --- | --- | --- |
 | **Lightning Web Comp.** | rca_invokeQuoteApproval | The user-facing modal for capturing comments and submitting the Quote for approval. |
-| --- | --- | --- |
 | **Apex Controller** | RCA_QuoteApprovalLWCController | Secure server-side controller that acts as a bridge between the LWC and the approval Flow. |
-| --- | --- | --- |
 | **Apex Test Class** | RCA_QuoteApprovalLWCController_Test | Provides >75% code coverage and validates the controller logic against various scenarios. |
-| --- | --- | --- |
 | **Flow (Orchestration)** | Quote Approval Process | The main Flow that orchestrates the entire approval process from submission to final decision. |
-| --- | --- | --- |
 | **Flow (Subflow)** | Quote - Approval - Update Quote Status | A utility subflow called by the main orchestration to update the Status field on the Quote record. |
-| --- | --- | --- |
 | **Flow (Subflow)** | Quote - Get Quote Record | A utility subflow to fetch the Quote record details. |
-| --- | --- | --- |
 
 ## **4\. How It Works (Default Process)**
 
