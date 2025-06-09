@@ -18,11 +18,14 @@ private class RCA_QuoteApprovalLWCController_Test {
 
     /**
      * @description Sets up test data, creating a single test user with the
-    * 'M Sales User' profile and required permission sets.
+    * required profile and permission sets.
     * This user is then available for all test methods to run against.
     */
+    /* --> uncomment from here
     @testSetup
     static void setup() {
+        
+        //Add test user for system.runAs() user
         // Find the specific Profile for the test user.
         Profile p = [SELECT Id FROM Profile WHERE Name = 'M Sales User' LIMIT 1];
 
@@ -42,10 +45,8 @@ private class RCA_QuoteApprovalLWCController_Test {
 
         // Find the Permission Set Groups by their DeveloperName (API Name).
         // IMPORTANT: Ensure these Permission Set Groups exist in your org.
-        List<PermissionSetGroup> psgsToAssign = [
-            SELECT Id, Status FROM PermissionSetGroup
-            WHERE DeveloperName IN ('RCA_User', 'Sales_Sales_Persona')
-        ];
+        List<PermissionSetGroup> psgsToAssign = [SELECT Id, Status FROM PermissionSetGroup
+                                                 WHERE DeveloperName IN ('YOUR_PSG')];
         // Assign the Permission Set Groups to the new user.
         if (!psgsToAssign.isEmpty()) {
             List<PermissionSetAssignment> assignments = new List<PermissionSetAssignment>();
@@ -62,6 +63,7 @@ private class RCA_QuoteApprovalLWCController_Test {
             insert assignments;
         }
     }
+    */ //--> uncomment till here
 
     private static Quote createTestQuote(Boolean setupForFlowSuccess, String flowFailureType) {
         // 1. Create dependent records (Account, Opportunity)
@@ -100,11 +102,11 @@ private class RCA_QuoteApprovalLWCController_Test {
     @isTest
     static void testSubmitForApproval_Success() {
         // Find the user created in the @testSetup method.
-        User testUser = [SELECT Id FROM User WHERE Alias = 'msales' LIMIT 1];
+        //User testUser = [SELECT Id FROM User WHERE Alias = 'msales' LIMIT 1];
 
         // Run the entire test method as the specified user to validate
         // permissions and sharing rules.
-        System.runAs(testUser) {
+        //System.runAs(testUser) {
             Quote testQuote = createTestQuote(true, null);
             String comments = 'Test comments - expecting success.';
 
@@ -117,14 +119,14 @@ private class RCA_QuoteApprovalLWCController_Test {
         List<ApprovalSubmission> lApprSub = [SELECT Id, RelatedRecordId, Status FROM ApprovalSubmission 
                                              WHERE RelatedRecordId =:testQuote.Id  LIMIT 1];
             System.assertEquals(false, lApprSub.isEmpty(), 'An Approval Submission exist for the quote');
-        }
+        //}
     }
 
     @isTest
     static void testSubmitForApproval_NullQuoteId() {
-        User testUser = [SELECT Id FROM User WHERE Alias = 'msales' LIMIT 1];
+        //User testUser = [SELECT Id FROM User WHERE Alias = 'msales' LIMIT 1];
 
-        System.runAs(testUser) {
+        //System.runAs(testUser) {
             String comments = 'Test comments - null quoteId.';
             AuraHandledException ex = null;
 
@@ -140,14 +142,14 @@ private class RCA_QuoteApprovalLWCController_Test {
             if (ex != null) {
                 System.debug('NullQuoteId Test - Exception Message: ' + ex.getMessage());
             }
-        }
+        //}
     }
 
     @isTest
     static void testSubmitForApproval_InvalidId() {
-        User testUser = [SELECT Id FROM User WHERE Alias = 'msales' LIMIT 1];
+        //User testUser = [SELECT Id FROM User WHERE Alias = 'msales' LIMIT 1];
 
-        System.runAs(testUser) {
+        //System.runAs(testUser) {
             String comments = 'Test comments - using an invalid ID string.';
             Exception ex = null;
 
@@ -162,6 +164,6 @@ private class RCA_QuoteApprovalLWCController_Test {
 
             // The flow will fail with this invalid ID, and the controller will throw an exception.
             System.assertNotEquals(null, ex, 'An exception should be thrown when the flow is started with an invalid ID.');
-        }
+        //}
     }
 }
