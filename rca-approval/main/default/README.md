@@ -1,10 +1,8 @@
 # **Kickstart Approval Process Framework**
 
 **Version:** 1.0.2
-
-**Author:** Rohit Radhakrishnan (Salesforce)
-
-**Date:** June 9, 2025
+**Installation Link Production:** [https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050dhAAA](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050dhAAA)
+**Installation Link Sandbox:** [https://test.salesforce.com/packaging/installPackage.apexp?p0=04td200000050dhAAA](https://test.salesforce.com/packaging/installPackage.apexp?p0=04td200000050dhAAA)
 
 ## **1\. Overview**
 
@@ -29,6 +27,7 @@ The core of the process is driven by a powerful Orchestration Flow, making the b
 | **Flow (Orchestration)** | Quote Approval Process | The main Flow that orchestrates the entire approval process from submission to final decision. |
 | **Flow (Subflow)** | Quote - Approval - Update Quote Status | A utility subflow called by the main orchestration to update the Status field on the Quote record. |
 | **Flow (Subflow)** | Quote - Get Quote Record | A utility subflow to fetch the Quote record details. |
+| **Quick Action** | Quote - Submit for Approval | Quick action button that invokes the flow via an apex to submit for approval. |
 
 ## **4\. How It Works (Default Process)**
 
