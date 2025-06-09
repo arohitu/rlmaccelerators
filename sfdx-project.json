@@ -1,12 +1,12 @@
 {
   "packageDirectories": [
     {
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
+      "versionName": "Spring '25",
+      "versionNumber": "1.4.0.NEXT",
       "path": "rca-approval",
       "default": true,
-      "package": "RLMAdvApprovalStarter",
-      "versionDescription": "RLM Adv Approval Starter",
+      "package": "Advanced Approval Starter",
+      "versionDescription": "Revenue Cloud Advanced Approval Starter Package.",
       "definitionFile": "config/project-scratch-def-rc-base.json"
     }
   ],
@@ -15,9 +15,11 @@
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "63.0",
   "packageAliases": {
-    "RLMAdvApprovalStarter": "0Hod20000000FyLCAU",
+    "Advanced Approval Starter": "0Hod20000000FzxCAE",
     "RLMAdvApprovalStarter@0.1.0-1": "04td20000004zbBAAQ",
     "RLMAdvApprovalStarter@0.1.0-2": "04td200000050dhAAA",
-    "RLMAdvApprovalStarter@0.1.0-3": "04td200000050fJAAQ"
+    "RLMAdvApprovalStarter@0.1.0-3": "04td200000050fJAAQ",
+    "Advanced Approval Starter@1.3.0-1": "04td20000005157AAA",
+    "Advanced Approval Starter@1.4.0-1": "04td2000000516jAAA"
   }
 }

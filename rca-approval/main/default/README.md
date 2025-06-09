@@ -1,10 +1,12 @@
 # **Kickstart Approval Process Framework**
 
-**Version:** 1.0.3
+**Version:** 1.4
 
-[**Installation in Production**](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
+[**Installation in Production**](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000516jAAA)
 
-[**Installation in Sandbox**](https://test.salesforce.com/packaging/installPackage.apexp?p0=04td200000050fJAAQ)
+[**Installation in Sandbox**](https://test.salesforce.com/packaging/installPackage.apexp?p0=04td2000000516jAAA)
+
+**Install using SF CLI** `sf project deploy start  --source-dir rca-approval --target-org YOUR_ORG_ALISA --concise`
 
 ## **1\. Overview**
 
