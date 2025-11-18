@@ -1,6 +1,7 @@
 /**
  * @description Handler class for RCA_ApprovalWorkItemTrigger
  *              Creates junction records between ApprovalWorkItem and Quote for enhanced reporting
+ *              Refactored for maximum testability (75%+ coverage requirement for packaging)
  * @author Revenue Cloud Accelerators
  * @date 2025
  */
@@ -8,29 +9,65 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
     
     /**
      * @description Handles after insert trigger context
-     * @param newRecords List of newly inserted ApprovalWorkItem records
+     * Thin wrapper - converts to DTO and delegates to testable method
      */
     public static void handleAfterInsert(List<ApprovalWorkItem> newRecords) {
-        processApprovalWorkItems(newRecords, null);
+        if (newRecords == null || newRecords.isEmpty()) return;
+        List<RCA_ApprovalWorkItemData> dtoList = convertToDTO(newRecords);
+        processWorkItems(dtoList, false);
     }
     
     /**
      * @description Handles after update trigger context
-     * @param newRecords List of updated ApprovalWorkItem records
-     * @param oldMap Map of old ApprovalWorkItem records by Id
+     * Thin wrapper - converts to DTO and delegates to testable method
      */
     public static void handleAfterUpdate(List<ApprovalWorkItem> newRecords, Map<Id, ApprovalWorkItem> oldMap) {
-        processApprovalWorkItems(newRecords, oldMap);
+        if (newRecords == null || newRecords.isEmpty()) return;
+        List<RCA_ApprovalWorkItemData> dtoList = convertToDTO(newRecords, oldMap);
+        processWorkItems(dtoList, true);
     }
     
     /**
-     * @description Checks if relevant fields have changed
-     * @param newRecord New version of the record
-     * @param oldRecord Old version of the record
-     * @return Boolean indicating if relevant changes occurred
+     * @description Converts ApprovalWorkItem records to DTOs
+     * Thin conversion method
+     */
+    @TestVisible
+    private static List<RCA_ApprovalWorkItemData> convertToDTO(List<ApprovalWorkItem> records) {
+        return convertToDTO(records, null);
+    }
+    
+    /**
+     * @description Converts ApprovalWorkItem records to DTOs with change detection
+     * Thin conversion method
+     */
+    @TestVisible
+    private static List<RCA_ApprovalWorkItemData> convertToDTO(List<ApprovalWorkItem> records, Map<Id, ApprovalWorkItem> oldMap) {
+        List<RCA_ApprovalWorkItemData> dtoList = new List<RCA_ApprovalWorkItemData>();
+        for (ApprovalWorkItem awi : records) {
+            // Only process Quote-related items
+            if (awi.RelatedRecordObjectName != 'Quote' || awi.RelatedRecordId == null) continue;
+            
+            // For updates, only process if relevant fields changed
+            if (oldMap != null && !hasRelevantChanges(awi, oldMap.get(awi.Id))) continue;
+            
+            RCA_ApprovalWorkItemData dto = new RCA_ApprovalWorkItemData();
+            dto.workItemId = awi.Id;
+            dto.relatedRecordId = awi.RelatedRecordId;
+            dto.relatedRecordObjectName = awi.RelatedRecordObjectName;
+            dto.status = awi.Status;
+            dto.assignedToId = awi.AssignedToId;
+            dto.approvalChainName = awi.ApprovalChainName;
+            dtoList.add(dto);
+        }
+        return dtoList;
+    }
+    
+    /**
+     * @description Checks if relevant fields changed
      */
     @TestVisible
     private static Boolean hasRelevantChanges(ApprovalWorkItem newRecord, ApprovalWorkItem oldRecord) {
+        if (oldRecord == null) return true;
         return newRecord.RelatedRecordId != oldRecord.RelatedRecordId ||
                newRecord.Status != oldRecord.Status ||
                newRecord.AssignedToId != oldRecord.AssignedToId ||
@@ -38,88 +75,147 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
     }
     
     /**
-     * @description Main processing method to create junction records for Quote-related ApprovalWorkItems
-     * @param records List of ApprovalWorkItem records to process
-     * @param oldMap Map of old records (null for insert context)
+     * @description Main processing method - works entirely with DTOs (fully testable!)
+     * This is where ALL the business logic lives
      */
     @TestVisible
-    private static void processApprovalWorkItems(List<ApprovalWorkItem> records, Map<Id, ApprovalWorkItem> oldMap) {
-        // Filter for Quote-related ApprovalWorkItems
-        List<ApprovalWorkItem> quoteWorkItems = new List<ApprovalWorkItem>();
-        Set<Id> approvalWorkItemIds = new Set<Id>();
+    private static void processWorkItems(List<RCA_ApprovalWorkItemData> workItemDataList, Boolean isUpdate) {
+        if (workItemDataList == null || workItemDataList.isEmpty()) return;
         
-        for (ApprovalWorkItem awi : records) {
-            // Check if RelatedRecord is a Quote
-            if (awi.RelatedRecordObjectName == 'Quote' && awi.RelatedRecordId != null) {
-                // For updates, process if key fields changed
-                if (oldMap == null || hasRelevantChanges(awi, oldMap.get(awi.Id))) {
-                    quoteWorkItems.add(awi);
-                    approvalWorkItemIds.add(awi.Id);
-                }
+        // Filter for Quote-related items with valid data
+        List<RCA_ApprovalWorkItemData> validItems = filterValidQuoteItems(workItemDataList);
+        if (validItems.isEmpty()) return;
+        
+        // Get work item IDs for querying existing junctions
+        Set<String> workItemIds = extractWorkItemIds(validItems);
+        
+        // Query existing junction records
+        Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions = queryExistingJunctions(workItemIds);
+        
+        // Prepare records for DML
+        List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
+        List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
+        
+        prepareJunctionRecords(validItems, existingJunctions, toInsert, toUpdate);
+        
+        // Perform DML
+        performDML(toInsert, toUpdate);
+    }
+    
+    /**
+     * @description Filters for valid Quote-related items
+     */
+    @TestVisible
+    private static List<RCA_ApprovalWorkItemData> filterValidQuoteItems(List<RCA_ApprovalWorkItemData> items) {
+        List<RCA_ApprovalWorkItemData> validItems = new List<RCA_ApprovalWorkItemData>();
+        for (RCA_ApprovalWorkItemData item : items) {
+            if (item.relatedRecordObjectName == 'Quote' && item.relatedRecordId != null) {
+                validItems.add(item);
             }
         }
-        
-        // Exit early if no Quote-related work items
-        if (quoteWorkItems.isEmpty()) {
-            return;
+        return validItems;
+    }
+    
+    /**
+     * @description Extracts work item IDs as strings
+     */
+    @TestVisible
+    private static Set<String> extractWorkItemIds(List<RCA_ApprovalWorkItemData> items) {
+        Set<String> workItemIds = new Set<String>();
+        for (RCA_ApprovalWorkItemData item : items) {
+            workItemIds.add(String.valueOf(item.workItemId));
         }
-        
-        // Query existing junction records to avoid duplicates
-        Set<String> workItemIdStrings = new Set<String>();
-        for (Id workItemId : approvalWorkItemIds) {
-            workItemIdStrings.add(String.valueOf(workItemId));
-        }
-        
+        return workItemIds;
+    }
+    
+    /**
+     * @description Queries existing junction records
+     */
+    @TestVisible
+    private static Map<String, RCA_ApprovalWorkItemQuote__c> queryExistingJunctions(Set<String> workItemIds) {
         Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions = new Map<String, RCA_ApprovalWorkItemQuote__c>();
+        if (workItemIds.isEmpty()) return existingJunctions;
+        
         for (RCA_ApprovalWorkItemQuote__c junction : [
-            SELECT Id, RCA_ApprovalWorkItemId__c, RCA_Quote__c
+            SELECT Id, RCA_ApprovalWorkItemId__c, RCA_Quote__c, 
+                   RCA_Status__c, RCA_AssignedToId__c, RCA_Label__c
             FROM RCA_ApprovalWorkItemQuote__c
-            WHERE RCA_ApprovalWorkItemId__c IN :workItemIdStrings
+            WHERE RCA_ApprovalWorkItemId__c IN :workItemIds
         ]) {
             existingJunctions.put(junction.RCA_ApprovalWorkItemId__c, junction);
         }
-        
-        // Prepare junction records for DML
-        List<RCA_ApprovalWorkItemQuote__c> junctionsToInsert = new List<RCA_ApprovalWorkItemQuote__c>();
-        List<RCA_ApprovalWorkItemQuote__c> junctionsToUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
-        
-        for (ApprovalWorkItem awi : quoteWorkItems) {
-            String workItemIdString = String.valueOf(awi.Id);
+        return existingJunctions;
+    }
+    
+    /**
+     * @description Prepares junction records for insert/update
+     */
+    @TestVisible
+    private static void prepareJunctionRecords(
+        List<RCA_ApprovalWorkItemData> items,
+        Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions,
+        List<RCA_ApprovalWorkItemQuote__c> toInsert,
+        List<RCA_ApprovalWorkItemQuote__c> toUpdate
+    ) {
+        for (RCA_ApprovalWorkItemData item : items) {
+            String workItemIdString = String.valueOf(item.workItemId);
+            
             if (existingJunctions.containsKey(workItemIdString)) {
-                // Update existing junction with latest values
-                RCA_ApprovalWorkItemQuote__c existingJunction = existingJunctions.get(workItemIdString);
-                existingJunction.RCA_Quote__c = awi.RelatedRecordId;
-                existingJunction.RCA_Status__c = awi.Status;
-                existingJunction.RCA_AssignedToId__c = awi.AssignedToId;
-                existingJunction.RCA_Label__c = awi.ApprovalChainName;
-                junctionsToUpdate.add(existingJunction);
+                // Update existing - but skip Quote field (Master-Detail can't be updated)
+                RCA_ApprovalWorkItemQuote__c existing = existingJunctions.get(workItemIdString);
+                updateJunctionFields(existing, item);
+                toUpdate.add(existing);
             } else {
-                // Create new junction record with all field values
-                RCA_ApprovalWorkItemQuote__c newJunction = new RCA_ApprovalWorkItemQuote__c(
-                    RCA_ApprovalWorkItemId__c = workItemIdString,
-                    RCA_Quote__c = awi.RelatedRecordId,
-                    RCA_Status__c = awi.Status,
-                    RCA_AssignedToId__c = awi.AssignedToId,
-                    RCA_Label__c = awi.ApprovalChainName
-                );
-                junctionsToInsert.add(newJunction);
+                // Create new
+                RCA_ApprovalWorkItemQuote__c newJunction = createJunctionRecord(item);
+                toInsert.add(newJunction);
             }
         }
-        
-        // Perform DML operations with error handling
+    }
+    
+    /**
+     * @description Updates junction fields (excluding Master-Detail Quote field)
+     */
+    @TestVisible
+    private static void updateJunctionFields(RCA_ApprovalWorkItemQuote__c junction, RCA_ApprovalWorkItemData item) {
+        // Don't update RCA_Quote__c - Master-Detail field can't be changed
+        junction.RCA_Status__c = item.status;
+        junction.RCA_AssignedToId__c = item.assignedToId;
+        junction.RCA_Label__c = item.approvalChainName;
+    }
+    
+    /**
+     * @description Creates a new junction record
+     */
+    @TestVisible
+    private static RCA_ApprovalWorkItemQuote__c createJunctionRecord(RCA_ApprovalWorkItemData item) {
+        return new RCA_ApprovalWorkItemQuote__c(
+            RCA_ApprovalWorkItemId__c = String.valueOf(item.workItemId),
+            RCA_Quote__c = item.relatedRecordId,
+            RCA_Status__c = item.status,
+            RCA_AssignedToId__c = item.assignedToId,
+            RCA_Label__c = item.approvalChainName
+        );
+    }
+    
+    /**
+     * @description Performs DML operations with error handling
+     */
+    @TestVisible
+    private static void performDML(
+        List<RCA_ApprovalWorkItemQuote__c> toInsert,
+        List<RCA_ApprovalWorkItemQuote__c> toUpdate
+    ) {
         try {
-            if (!junctionsToInsert.isEmpty()) {
-                insert junctionsToInsert;
+            if (!toInsert.isEmpty()) {
+                insert toInsert;
             }
-            if (!junctionsToUpdate.isEmpty()) {
-                update junctionsToUpdate;
+            if (!toUpdate.isEmpty()) {
+                update toUpdate;
             }
         } catch (DmlException e) {
-            // Log the error - in production, you might want to use a logging framework
-            System.debug(LoggingLevel.ERROR, 'Error creating/updating junction records: ' + e.getMessage());
-            // Re-throw to ensure visibility of the error
+            System.debug(LoggingLevel.ERROR, 'Error in junction DML: ' + e.getMessage());
             throw e;
         }
     }
 }
-
