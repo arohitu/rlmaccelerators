@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RCA_Label__c</fullName>
+    <label>Approval Chain Name</label>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+    <description>Approval chain name from the approval work item. Copied from ApprovalWorkItem.ApprovalChainName for reporting purposes.</description>
+</CustomField>
+
+

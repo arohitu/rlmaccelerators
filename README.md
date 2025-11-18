@@ -5,7 +5,7 @@ README.md for Revenue-Cloud-Accelerators
 <!-- Badges (swap the dummy URLs) -->
 ![Build](https://img.shields.io/github/actions/workflow/status/your-org/repo/ci.yml?label=CI)
 ![Latest Release](https://img.shields.io/github/v/release/your-org/repo)
-![License](https://img.shields.io/github/license/your-org/repo)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 # Revenue‑Cloud Accelerators
 
@@ -28,11 +28,12 @@ Everything here has shipped in the real world; everything here still evolves.
 
 ---
 
-## What’s Inside
+## What's Inside
 
 | Folder | Accelerator |
 | ------ | ----------- |
 | `rca-approval` | **Advanced Approval Starter** |
+| `rca-aa-reports` | **Advanced Approval Reports** |
 
 ---
 
@@ -53,7 +54,8 @@ _That’s it. No CLI. No scratch‑org gymnastics._
 
 | Accelerator | Version | Install Link | Docs |
 | ----------- | ------- | ------------ | ---- |
-| RCA Approvals  | ![version](https://img.shields.io/static/v1?label=latest&message=1.4.0&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000516jAAA) | [/rca-approval/main/default/README.md](rca-approval/main/default/README.md) |
+| Advanced Approval Starter  | ![version](https://img.shields.io/static/v1?label=latest&message=1.4.0&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000516jAAA) | [/rca-approval/main/default/README.md](rca-approval/main/default/README.md) |
+| Advanced Approval Reports  | ![version](https://img.shields.io/static/v1?label=latest&message=1.0.0&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Ad3JAAS) | [/rca-aa-reports/README.md](rca-aa-reports/README.md) |
 
 ---
 
@@ -76,12 +78,11 @@ _That’s it. No CLI. No scratch‑org gymnastics._
 
 ## License
 
-Apache 2.0—permissive for commercial use.  
-If that doesn’t fit your legal department, fork and roll your own.
+MIT License - Free to use, modify, and distribute.  
+See the [LICENSE](LICENSE) file for full details.
 
 ---
 
 ### Acknowledgements
 
-Built by architects who still write code, not slide decks.  
-Leverages lessons from >50 Revenue Cloud deployments since 2016.
+Built by architect who still write code, not slide decks.  
