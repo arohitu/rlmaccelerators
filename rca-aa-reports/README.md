@@ -215,11 +215,13 @@ After installing this package, users can:
 Install the managed package using the installation URL:
 
 **Latest Version:** 1.0.0-1  
-**Installation URL:** https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Ad3JAAS
+**Installation URLs:**
+- **Production:** https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Ad3JAAS
+- **Sandbox:** https://test.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Ad3JAAS
 
 **Installation Steps:**
-1. Click the installation URL or copy/paste it into your browser
-2. Log in to your target org (sandbox or production)
+1. Click the appropriate installation URL for your org type (Production or Sandbox)
+2. Log in to your target org
 3. Select "Install for All Users" (recommended) or choose specific profiles
 4. Click "Install"
 5. Approve security access for the package components
