@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RCA_Quote__c</fullName>
+    <label>Quote</label>
+    <referenceTo>Quote</referenceTo>
+    <relationshipLabel>Approval Work Item Quotes</relationshipLabel>
+    <relationshipName>ApprovalWorkItemQuotes</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <required>false</required>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    <description>Master-Detail relationship to Quote. Junction records inherit Quote security and are deleted when Quote is deleted. This enables comprehensive reporting on Quote approvals.</description>
+</CustomField>
+

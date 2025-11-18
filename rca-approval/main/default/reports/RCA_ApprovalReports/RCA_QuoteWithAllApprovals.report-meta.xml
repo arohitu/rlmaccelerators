@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>Quote$Name</field>
+    </columns>
+    <columns>
+        <field>Quote$Status</field>
+    </columns>
+    <columns>
+        <field>Quote.ApprovalWorkItemQuotes__r$Name</field>
+    </columns>
+    <columns>
+        <field>Quote.ApprovalWorkItemQuotes__r$RCA_Label__c</field>
+    </columns>
+    <columns>
+        <field>Quote.ApprovalWorkItemQuotes__r$RCA_Status__c</field>
+    </columns>
+    <columns>
+        <field>Quote.ApprovalWorkItemQuotes__r$RCA_AssignedToId__c</field>
+    </columns>
+    <description>Quote With All Approvals in any Status</description>
+    <format>Tabular</format>
+    <name>Quote With All Approvals</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>RCA_QuotewithApprovalWorkItems__c</reportType>
+    <scope>user</scope>
+    <showDetails>true</showDetails>
+    <showGrandTotal>true</showGrandTotal>
+    <showSubTotals>true</showSubTotals>
+    <timeFrameFilter>
+        <dateColumn>Quote$CreatedDate</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>
