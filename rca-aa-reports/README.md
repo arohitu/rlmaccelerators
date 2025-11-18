@@ -216,8 +216,8 @@ Install the managed package using the installation URL:
 
 **Latest Version:** 1.0.0-1  
 **Installation URLs:**
-- **Production:** https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Adw9AAC
-- **Sandbox:** https://test.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Adw9AAC
+- **Production:** https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000AeKLAA0
+- **Sandbox:** https://test.salesforce.com/packaging/installPackage.apexp?p0=04td2000000AeKLAA0
 
 **Installation Steps:**
 1. Click the appropriate installation URL for your org type (Production or Sandbox)
@@ -391,7 +391,7 @@ See the main project [LICENSE](../LICENSE) file for full details.
 ### v1.0.0-1 (Winter '26) - Initial Release
 **Release Date:** November 18, 2025  
 **Package ID:** 0Hod20000000Td7CAE  
-**Subscriber Package Version ID:** 04td2000000Adw9AAC
+**Subscriber Package Version ID:** 04td2000000AeKLAA0
 
 **What's Included:**
 - Custom junction object: RCA_ApprovalWorkItemQuote__c with 5 custom fields

@@ -1,9 +1,8 @@
 /**
- * @description Test class for RCA_ApprovalWorkItemTriggerHandler
+ * @description Comprehensive test class for RCA_ApprovalWorkItemTriggerHandler
+ *              Achieves 75%+ coverage by testing all business logic methods
  * @author Revenue Cloud Accelerators
  * @date 2025
- * 
- * Achieves 80%+ coverage by testing all individual methods and code paths
  */
 @isTest
 private class RCA_ApprovalWorkItemTriggerHandler_Test {
@@ -14,7 +13,7 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         insert testAccount;
         
         Opportunity testOpp = new Opportunity(
-            Name = 'Test Opp',
+            Name = 'Test Opportunity',
             AccountId = testAccount.Id,
             StageName = 'Prospecting',
             CloseDate = Date.today().addDays(30)
@@ -22,7 +21,7 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         insert testOpp;
         
         List<Quote> testQuotes = new List<Quote>();
-        for (Integer i = 0; i < 10; i++) {
+        for (Integer i = 1; i <= 10; i++) {
             testQuotes.add(new Quote(
                 Name = 'Test Quote ' + i,
                 OpportunityId = testOpp.Id,
@@ -32,413 +31,636 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         insert testQuotes;
     }
     
-    /**
-     * Test null/empty input handling
-     */
-    @isTest
-    static void testNullAndEmptyInputs() {
-        Test.startTest();
-        
-        // Test null inputs
-        RCA_ApprovalWorkItemTriggerHandler.handleAfterInsert(null);
-        RCA_ApprovalWorkItemTriggerHandler.handleAfterUpdate(null, null);
-        
-        // Test empty inputs
-        RCA_ApprovalWorkItemTriggerHandler.handleAfterInsert(new List<ApprovalWorkItem>());
-        RCA_ApprovalWorkItemTriggerHandler.handleAfterUpdate(
-            new List<ApprovalWorkItem>(),
-            new Map<Id, ApprovalWorkItem>()
-        );
-        
-        Test.stopTest();
-        
-        System.assertEquals(0, [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c]);
-    }
+    // ========== CORE BUSINESS LOGIC TESTS (Main Coverage) ==========
     
-    /**
-     * Test filterQuoteRelatedItems method
-     */
     @isTest
-    static void testFilterQuoteRelatedItems() {
-        // Query any existing ApprovalWorkItems
-        List<ApprovalWorkItem> allItems = [
-            SELECT Id, RelatedRecordId, RelatedRecordObjectName, Status,
-                   AssignedToId, ApprovalChainName
-            FROM ApprovalWorkItem
-            LIMIT 10
-        ];
+    static void testProcessWorkItems_Insert() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
         
-        if (allItems.isEmpty()) {
-            // No existing items - test with empty list
-            Test.startTest();
-            RCA_ApprovalWorkItemTriggerHandler.ApprovalWorkItemWrapper result = 
-                RCA_ApprovalWorkItemTriggerHandler.filterQuoteRelatedItems(
-                    new List<ApprovalWorkItem>(), null
-                );
-            Test.stopTest();
-            
-            System.assert(result.quoteWorkItems.isEmpty(), 'Should return empty list');
-        } else {
-            // Test with existing items
-            Test.startTest();
-            RCA_ApprovalWorkItemTriggerHandler.ApprovalWorkItemWrapper result = 
-                RCA_ApprovalWorkItemTriggerHandler.filterQuoteRelatedItems(allItems, null);
-            Test.stopTest();
-            
-            System.assertNotEquals(null, result, 'Result should not be null');
-            System.assertNotEquals(null, result.quoteWorkItems, 'quoteWorkItems should not be null');
-        }
-    }
-    
-    /**
-     * Test has RelevantChanges method
-     */
-    @isTest
-    static void testHasRelevantChanges() {
-        List<ApprovalWorkItem> items = [
-            SELECT Id, RelatedRecordId, Status, AssignedToId, ApprovalChainName
-            FROM ApprovalWorkItem
-            LIMIT 2
-        ];
+        List<RCA_ApprovalWorkItemData> dataList = new List<RCA_ApprovalWorkItemData>();
+        dataList.add(createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Test Chain'));
         
         Test.startTest();
-        
-        if (items.size() >= 2) {
-            // Test with actual records
-            Boolean result = RCA_ApprovalWorkItemTriggerHandler.hasRelevantChanges(
-                items[0], items[1]
-            );
-            System.assertNotEquals(null, result, 'Result should not be null');
-            
-            // Test with null oldRecord
-            Boolean resultWithNull = RCA_ApprovalWorkItemTriggerHandler.hasRelevantChanges(
-                items[0], null
-            );
-            System.assertEquals(true, resultWithNull, 'Should return true when oldRecord is null');
-        } else {
-            // Test with null
-            ApprovalWorkItem newItem = new ApprovalWorkItem();
-            Boolean result = RCA_ApprovalWorkItemTriggerHandler.hasRelevantChanges(newItem, null);
-            System.assertEquals(true, result, 'Should return true for null oldRecord');
-        }
-        
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(dataList, false);
         Test.stopTest();
+        
+        List<RCA_ApprovalWorkItemQuote__c> junctions = [SELECT Id, RCA_Status__c FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(1, junctions.size());
+        System.assertEquals('Assigned', junctions[0].RCA_Status__c);
     }
     
-    /**
-     * Test queryExistingJunctions method
-     */
     @isTest
-    static void testQueryExistingJunctions() {
-        // Create test junction records
-        List<Quote> quotes = [SELECT Id FROM Quote LIMIT 3];
-        List<RCA_ApprovalWorkItemQuote__c> junctions = new List<RCA_ApprovalWorkItemQuote__c>();
+    static void testProcessWorkItems_Update() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
         
+        // Create initial junction
+        List<RCA_ApprovalWorkItemData> initialData = new List<RCA_ApprovalWorkItemData>();
+        initialData.add(createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Initial'));
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(initialData, false);
+        
+        // Update with new status
+        List<RCA_ApprovalWorkItemData> updateData = new List<RCA_ApprovalWorkItemData>();
+        updateData.add(createMockData('001', testQuote.Id, 'Approved', testUser.Id, 'Updated'));
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(updateData, true);
+        Test.stopTest();
+        
+        RCA_ApprovalWorkItemQuote__c junction = [SELECT RCA_Status__c, RCA_Label__c FROM RCA_ApprovalWorkItemQuote__c LIMIT 1];
+        System.assertEquals('Approved', junction.RCA_Status__c);
+        System.assertEquals('Updated', junction.RCA_Label__c);
+    }
+    
+    @isTest
+    static void testProcessWorkItems_Bulk() {
+        List<Quote> quotes = [SELECT Id FROM Quote LIMIT 10];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        List<RCA_ApprovalWorkItemData> dataList = new List<RCA_ApprovalWorkItemData>();
         for (Integer i = 0; i < quotes.size(); i++) {
-            junctions.add(new RCA_ApprovalWorkItemQuote__c(
-                RCA_ApprovalWorkItemId__c = 'TEST00000000000' + String.valueOf(i + 1),
-                RCA_Quote__c = quotes[i].Id,
-                RCA_Status__c = 'Assigned'
-            ));
+            dataList.add(createMockData(String.valueOf(i).leftPad(3, '0'), quotes[i].Id, 'Assigned', testUser.Id, 'Bulk ' + i));
         }
-        insert junctions;
         
         Test.startTest();
-        
-        // Query with empty set
-        Map<String, RCA_ApprovalWorkItemQuote__c> emptyResult = 
-            RCA_ApprovalWorkItemTriggerHandler.queryExistingJunctions(new Set<Id>());
-        System.assert(emptyResult.isEmpty(), 'Should return empty map for empty input');
-        
-        // Query existing junctions (if ApprovalWorkItems exist)
-        List<ApprovalWorkItem> items = [SELECT Id FROM ApprovalWorkItem LIMIT 3];
-        if (!items.isEmpty()) {
-            Set<Id> itemIds = new Set<Id>();
-            for (ApprovalWorkItem item : items) {
-                itemIds.add(item.Id);
-            }
-            
-            Map<String, RCA_ApprovalWorkItemQuote__c> result = 
-                RCA_ApprovalWorkItemTriggerHandler.queryExistingJunctions(itemIds);
-            System.assertNotEquals(null, result, 'Result should not be null');
-        }
-        
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(dataList, false);
         Test.stopTest();
+        
+        Integer count = [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(10, count);
     }
     
-    /**
-     * Test prepareJunctionRecords method
-     */
     @isTest
-    static void testPrepareJunctionRecords() {
-        List<Quote> quotes = [SELECT Id FROM Quote LIMIT 3];
-        List<ApprovalWorkItem> items = [
-            SELECT Id, RelatedRecordId, Status, AssignedToId, ApprovalChainName
-            FROM ApprovalWorkItem
-            WHERE RelatedRecordObjectName = 'Quote'
-            LIMIT 3
-        ];
-        
+    static void testProcessWorkItems_NullEmpty() {
         Test.startTest();
-        
-        if (!items.isEmpty()) {
-            // Test with existing ApprovalWorkItems
-            Map<String, RCA_ApprovalWorkItemQuote__c> emptyMap = new Map<String, RCA_ApprovalWorkItemQuote__c>();
-            
-            RCA_ApprovalWorkItemTriggerHandler.JunctionRecordsWrapper result = 
-                RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, emptyMap);
-            
-            System.assertNotEquals(null, result, 'Result should not be null');
-            System.assertNotEquals(null, result.junctionsToInsert, 'junctionsToInsert should not be null');
-            System.assertNotEquals(null, result.junctionsToUpdate, 'junctionsToUpdate should not be null');
-        } else {
-            // Test with empty list
-            Map<String, RCA_ApprovalWorkItemQuote__c> emptyMap = new Map<String, RCA_ApprovalWorkItemQuote__c>();
-            
-            RCA_ApprovalWorkItemTriggerHandler.JunctionRecordsWrapper result = 
-                RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(
-                    new List<ApprovalWorkItem>(), emptyMap
-                );
-            
-            System.assert(result.junctionsToInsert.isEmpty(), 'Should be empty');
-            System.assert(result.junctionsToUpdate.isEmpty(), 'Should be empty');
-        }
-        
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(null, false);
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(new List<RCA_ApprovalWorkItemData>(), false);
         Test.stopTest();
+        
+        Integer count = [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(0, count);
     }
     
-    /**
-     * Test performDML method
-     */
+    // ========== FILTER METHOD TESTS ==========
+    
     @isTest
-    static void testPerformDML() {
-        List<Quote> quotes = [SELECT Id FROM Quote LIMIT 5];
+    static void testFilterValidQuoteItems_ValidItems() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        List<RCA_ApprovalWorkItemData> input = new List<RCA_ApprovalWorkItemData>();
+        input.add(createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Valid'));
+        input.add(createMockData('002', testQuote.Id, 'Approved', testUser.Id, 'Valid2'));
         
         Test.startTest();
+        List<RCA_ApprovalWorkItemData> result = RCA_ApprovalWorkItemTriggerHandler.filterValidQuoteItems(input);
+        Test.stopTest();
         
-        // Test insert
+        System.assertEquals(2, result.size());
+    }
+    
+    @isTest
+    static void testFilterValidQuoteItems_FilterOutNonQuote() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        List<RCA_ApprovalWorkItemData> input = new List<RCA_ApprovalWorkItemData>();
+        
+        // Valid Quote item
+        input.add(createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Valid'));
+        
+        // Invalid - not Quote
+        RCA_ApprovalWorkItemData invalidType = createMockData('002', testQuote.Id, 'Assigned', testUser.Id, 'Invalid');
+        invalidType.relatedRecordObjectName = 'Opportunity';
+        input.add(invalidType);
+        
+        // Invalid - null relatedRecordId
+        RCA_ApprovalWorkItemData invalidNull = createMockData('003', testQuote.Id, 'Assigned', testUser.Id, 'Invalid2');
+        invalidNull.relatedRecordId = null;
+        input.add(invalidNull);
+        
+        Test.startTest();
+        List<RCA_ApprovalWorkItemData> result = RCA_ApprovalWorkItemTriggerHandler.filterValidQuoteItems(input);
+        Test.stopTest();
+        
+        System.assertEquals(1, result.size());
+    }
+    
+    // ========== EXTRACT IDS TEST ==========
+    
+    @isTest
+    static void testExtractWorkItemIds() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        List<RCA_ApprovalWorkItemData> input = new List<RCA_ApprovalWorkItemData>();
+        input.add(createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Test1'));
+        input.add(createMockData('002', testQuote.Id, 'Assigned', testUser.Id, 'Test2'));
+        input.add(createMockData('003', testQuote.Id, 'Assigned', testUser.Id, 'Test3'));
+        
+        Test.startTest();
+        Set<String> result = RCA_ApprovalWorkItemTriggerHandler.extractWorkItemIds(input);
+        Test.stopTest();
+        
+        System.assertEquals(3, result.size());
+    }
+    
+    // ========== QUERY EXISTING JUNCTIONS TEST ==========
+    
+    @isTest
+    static void testQueryExistingJunctions_Found() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        // Create test junction
+        RCA_ApprovalWorkItemData data = createMockData('999', testQuote.Id, 'Assigned', testUser.Id, 'Test');
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(new List<RCA_ApprovalWorkItemData>{data}, false);
+        
+        Set<String> searchIds = new Set<String>{String.valueOf(data.workItemId)};
+        
+        Test.startTest();
+        Map<String, RCA_ApprovalWorkItemQuote__c> result = RCA_ApprovalWorkItemTriggerHandler.queryExistingJunctions(searchIds);
+        Test.stopTest();
+        
+        System.assertEquals(1, result.size());
+        System.assert(result.containsKey(String.valueOf(data.workItemId)));
+    }
+    
+    @isTest
+    static void testQueryExistingJunctions_NotFound() {
+        Set<String> searchIds = new Set<String>{'04gd200000099999'};
+        
+        Test.startTest();
+        Map<String, RCA_ApprovalWorkItemQuote__c> result = RCA_ApprovalWorkItemTriggerHandler.queryExistingJunctions(searchIds);
+        Test.stopTest();
+        
+        System.assertEquals(0, result.size());
+    }
+    
+    @isTest
+    static void testQueryExistingJunctions_EmptyInput() {
+        Test.startTest();
+        Map<String, RCA_ApprovalWorkItemQuote__c> result = RCA_ApprovalWorkItemTriggerHandler.queryExistingJunctions(new Set<String>());
+        Test.stopTest();
+        
+        System.assertEquals(0, result.size());
+    }
+    
+    // ========== PREPARE JUNCTION RECORDS TESTS ==========
+    
+    @isTest
+    static void testPrepareJunctionRecords_Insert() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        List<RCA_ApprovalWorkItemData> items = new List<RCA_ApprovalWorkItemData>();
+        items.add(createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'New'));
+        
+        Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions = new Map<String, RCA_ApprovalWorkItemQuote__c>();
         List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
-        for (Integer i = 0; i < quotes.size(); i++) {
-            toInsert.add(new RCA_ApprovalWorkItemQuote__c(
-                RCA_ApprovalWorkItemId__c = 'TESTDML000000000' + String.valueOf(i + 1),
-                RCA_Quote__c = quotes[i].Id,
-                RCA_Status__c = 'Assigned'
-            ));
-        }
-        
-        RCA_ApprovalWorkItemTriggerHandler.performDML(toInsert, new List<RCA_ApprovalWorkItemQuote__c>());
-        
-        // Test update
-        for (RCA_ApprovalWorkItemQuote__c j : toInsert) {
-            j.RCA_Status__c = 'Approved';
-        }
-        
-        RCA_ApprovalWorkItemTriggerHandler.performDML(new List<RCA_ApprovalWorkItemQuote__c>(), toInsert);
-        
-        Test.stopTest();
-        
-        System.assertEquals(quotes.size(), [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c]);
-    }
-    
-    /**
-     * Test performDML error handling
-     */
-    @isTest
-    static void testPerformDMLErrorHandling() {
-        Test.startTest();
-        
-        Boolean exceptionCaught = false;
-        try {
-            // Try to insert invalid record (missing required field)
-            List<RCA_ApprovalWorkItemQuote__c> invalidList = new List<RCA_ApprovalWorkItemQuote__c>{
-                new RCA_ApprovalWorkItemQuote__c(
-                    RCA_Quote__c = [SELECT Id FROM Quote LIMIT 1].Id
-                    // Missing RCA_ApprovalWorkItemId__c
-                )
-            };
-            
-            RCA_ApprovalWorkItemTriggerHandler.performDML(invalidList, new List<RCA_ApprovalWorkItemQuote__c>());
-        } catch (DmlException e) {
-            exceptionCaught = true;
-        }
-        
-        Test.stopTest();
-        
-        System.assert(exceptionCaught, 'Should catch and re-throw DML exception');
-    }
-    
-    /**
-     * Test with real ApprovalWorkItems if available
-     */
-    @isTest
-    static void testWithExistingApprovalWorkItems() {
-        List<ApprovalWorkItem> items = [
-            SELECT Id, RelatedRecordId, RelatedRecordObjectName, Status,
-                   AssignedToId, ApprovalChainName
-            FROM ApprovalWorkItem
-            WHERE RelatedRecordObjectName = 'Quote'
-            LIMIT 5
-        ];
-        
-        if (!items.isEmpty()) {
-            Test.startTest();
-            
-            // Test insert scenario
-            RCA_ApprovalWorkItemTriggerHandler.handleAfterInsert(items);
-            
-            // Test update scenario
-            Map<Id, ApprovalWorkItem> oldMap = new Map<Id, ApprovalWorkItem>();
-            for (ApprovalWorkItem item : items) {
-                oldMap.put(item.Id, item.clone(true, true, true, true));
-            }
-            
-            RCA_ApprovalWorkItemTriggerHandler.handleAfterUpdate(items, oldMap);
-            
-            Test.stopTest();
-            
-            // Verify junctions were created
-            Set<String> approvalIds = new Set<String>();
-            for (ApprovalWorkItem item : items) {
-                approvalIds.add(String.valueOf(item.Id));
-            }
-            
-            Integer count = [
-                SELECT COUNT()
-                FROM RCA_ApprovalWorkItemQuote__c
-                WHERE RCA_ApprovalWorkItemId__c IN :approvalIds
-            ];
-            
-            System.assert(count > 0, 'Junctions should be created');
-        }
-    }
-    
-    /**
-     * Test junction record operations
-     */
-    @isTest
-    static void testJunctionRecordOperations() {
-        List<Quote> quotes = [SELECT Id FROM Quote];
+        List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
         
         Test.startTest();
-        
-        // Create junctions
-        List<RCA_ApprovalWorkItemQuote__c> junctions = new List<RCA_ApprovalWorkItemQuote__c>();
-        for (Integer i = 0; i < quotes.size(); i++) {
-            junctions.add(new RCA_ApprovalWorkItemQuote__c(
-                RCA_ApprovalWorkItemId__c = 'TESTOPS00000000' + String.valueOf(i).leftPad(2, '0'),
-                RCA_Quote__c = quotes[i].Id,
-                RCA_Status__c = 'Assigned',
-                RCA_AssignedToId__c = UserInfo.getUserId(),
-                RCA_Label__c = 'Test Chain ' + i
-            ));
-        }
-        insert junctions;
-        
-        // Update junctions
-        for (RCA_ApprovalWorkItemQuote__c j : junctions) {
-            j.RCA_Status__c = 'Approved';
-        }
-        update junctions;
-        
-        // Upsert test
-        RCA_ApprovalWorkItemQuote__c upsertTest = new RCA_ApprovalWorkItemQuote__c(
-            RCA_ApprovalWorkItemId__c = 'TESTOPS0000000099',
-            RCA_Quote__c = quotes[0].Id,
-            RCA_Status__c = 'Rejected'
-        );
-        upsert upsertTest RCA_ApprovalWorkItemId__c;
-        
+        RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, existingJunctions, toInsert, toUpdate);
         Test.stopTest();
         
-        System.assert([SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c] > 0, 'Junctions should exist');
+        System.assertEquals(1, toInsert.size());
+        System.assertEquals(0, toUpdate.size());
+        System.assertEquals(testQuote.Id, toInsert[0].RCA_Quote__c);
     }
     
-    /**
-     * Test all status values
-     */
     @isTest
-    static void testAllStatusValues() {
-        Quote q = [SELECT Id FROM Quote LIMIT 1];
-        List<String> statuses = new List<String>{
-            'Assigned', 'Approved', 'Canceled', 'Errored',
-            'Recalled', 'Rejected', 'Withdrawn'
-        };
+    static void testPrepareJunctionRecords_Update() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        // Create existing junction
+        RCA_ApprovalWorkItemData data = createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Initial');
+        List<RCA_ApprovalWorkItemData> initialList = new List<RCA_ApprovalWorkItemData>{data};
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(initialList, false);
+        
+        // Get the existing junction
+        RCA_ApprovalWorkItemQuote__c existing = [SELECT Id, RCA_ApprovalWorkItemId__c, RCA_Quote__c FROM RCA_ApprovalWorkItemQuote__c LIMIT 1];
+        
+        // Prepare update
+        RCA_ApprovalWorkItemData updateData = createMockData('001', testQuote.Id, 'Approved', testUser.Id, 'Updated');
+        List<RCA_ApprovalWorkItemData> items = new List<RCA_ApprovalWorkItemData>{updateData};
+        
+        Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions = new Map<String, RCA_ApprovalWorkItemQuote__c>();
+        existingJunctions.put(existing.RCA_ApprovalWorkItemId__c, existing);
+        
+        List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
+        List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
         
         Test.startTest();
-        
-        List<RCA_ApprovalWorkItemQuote__c> junctions = new List<RCA_ApprovalWorkItemQuote__c>();
-        for (Integer i = 0; i < statuses.size(); i++) {
-            junctions.add(new RCA_ApprovalWorkItemQuote__c(
-                RCA_ApprovalWorkItemId__c = 'TESTSTATUS00000' + String.valueOf(i + 1),
-                RCA_Quote__c = q.Id,
-                RCA_Status__c = statuses[i]
-            ));
-        }
-        insert junctions;
-        
+        RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, existingJunctions, toInsert, toUpdate);
         Test.stopTest();
         
-        System.assertEquals(statuses.size(), [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c WHERE RCA_Quote__c = :q.Id]);
+        System.assertEquals(0, toInsert.size());
+        System.assertEquals(1, toUpdate.size());
+        System.assertEquals('Approved', toUpdate[0].RCA_Status__c);
     }
     
-    /**
-     * Test cascade delete
-     */
+    // ========== UPDATE JUNCTION FIELDS TEST ==========
+    
     @isTest
-    static void testCascadeDelete() {
-        Quote q = [SELECT Id FROM Quote LIMIT 1];
+    static void testUpdateJunctionFields() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
         
         RCA_ApprovalWorkItemQuote__c junction = new RCA_ApprovalWorkItemQuote__c(
-            RCA_ApprovalWorkItemId__c = 'TESTCASCADE00001',
-            RCA_Quote__c = q.Id,
+            RCA_ApprovalWorkItemId__c = '04gd200000001111',
+            RCA_Quote__c = testQuote.Id,
+            RCA_Status__c = 'Assigned',
+            RCA_Label__c = 'Old'
+        );
+        insert junction;
+        
+        RCA_ApprovalWorkItemData updateData = createMockData('001', testQuote.Id, 'Approved', testUser.Id, 'New');
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemTriggerHandler.updateJunctionFields(junction, updateData);
+        Test.stopTest();
+        
+        System.assertEquals('Approved', junction.RCA_Status__c);
+        System.assertEquals('New', junction.RCA_Label__c);
+        System.assertEquals(testUser.Id, junction.RCA_AssignedToId__c);
+        // Quote field should remain unchanged (Master-Detail)
+        System.assertEquals(testQuote.Id, junction.RCA_Quote__c);
+    }
+    
+    // ========== CREATE JUNCTION RECORD TEST ==========
+    
+    @isTest
+    static void testCreateJunctionRecord() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        RCA_ApprovalWorkItemData data = createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Test Chain');
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemQuote__c junction = RCA_ApprovalWorkItemTriggerHandler.createJunctionRecord(data);
+        Test.stopTest();
+        
+        System.assertNotEquals(null, junction);
+        System.assertEquals(testQuote.Id, junction.RCA_Quote__c);
+        System.assertEquals('Assigned', junction.RCA_Status__c);
+        System.assertEquals(testUser.Id, junction.RCA_AssignedToId__c);
+        System.assertEquals('Test Chain', junction.RCA_Label__c);
+    }
+    
+    // ========== PERFORM DML TESTS ==========
+    
+    @isTest
+    static void testPerformDML_Insert() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        
+        List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
+        toInsert.add(new RCA_ApprovalWorkItemQuote__c(
+            RCA_ApprovalWorkItemId__c = '04gd200000002222',
+            RCA_Quote__c = testQuote.Id,
+            RCA_Status__c = 'Assigned'
+        ));
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemTriggerHandler.performDML(toInsert, new List<RCA_ApprovalWorkItemQuote__c>());
+        Test.stopTest();
+        
+        Integer count = [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(1, count);
+    }
+    
+    @isTest
+    static void testPerformDML_Update() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        
+        RCA_ApprovalWorkItemQuote__c junction = new RCA_ApprovalWorkItemQuote__c(
+            RCA_ApprovalWorkItemId__c = '04gd200000003333',
+            RCA_Quote__c = testQuote.Id,
             RCA_Status__c = 'Assigned'
         );
         insert junction;
         
+        junction.RCA_Status__c = 'Approved';
+        List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>{junction};
+        
         Test.startTest();
-        delete q;
+        RCA_ApprovalWorkItemTriggerHandler.performDML(new List<RCA_ApprovalWorkItemQuote__c>(), toUpdate);
         Test.stopTest();
         
-        System.assertEquals(0, [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c WHERE Id = :junction.Id]);
+        RCA_ApprovalWorkItemQuote__c updated = [SELECT RCA_Status__c FROM RCA_ApprovalWorkItemQuote__c WHERE Id = :junction.Id];
+        System.assertEquals('Approved', updated.RCA_Status__c);
     }
     
-    /**
-     * Test processApprovalWorkItems with empty list
-     */
     @isTest
-    static void testProcessApprovalWorkItemsEmpty() {
+    static void testPerformDML_Error() {
+        // Try to insert without required Quote field
+        List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
+        toInsert.add(new RCA_ApprovalWorkItemQuote__c(
+            RCA_ApprovalWorkItemId__c = '04gd200000004444',
+            RCA_Status__c = 'Assigned'
+            // Missing required RCA_Quote__c
+        ));
+        
+        Boolean exceptionCaught = false;
         Test.startTest();
-        
-        RCA_ApprovalWorkItemTriggerHandler.processApprovalWorkItems(
-            new List<ApprovalWorkItem>(), null
-        );
-        
-        RCA_ApprovalWorkItemTriggerHandler.processApprovalWorkItems(
-            new List<ApprovalWorkItem>(), 
-            new Map<Id, ApprovalWorkItem>()
-        );
-        
+        try {
+            RCA_ApprovalWorkItemTriggerHandler.performDML(toInsert, new List<RCA_ApprovalWorkItemQuote__c>());
+        } catch (DmlException e) {
+            exceptionCaught = true;
+        }
         Test.stopTest();
         
-        System.assertEquals(0, [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c]);
+        System.assert(exceptionCaught);
     }
     
-    /**
-     * Test trigger integration
-     */
     @isTest
-    static void testTriggerIntegration() {
-        // This test ensures the trigger compiles and handlers work
+    static void testPerformDML_EmptyLists() {
         Test.startTest();
-        
-        RCA_ApprovalWorkItemTriggerHandler.handleAfterInsert(new List<ApprovalWorkItem>());
-        RCA_ApprovalWorkItemTriggerHandler.handleAfterUpdate(
-            new List<ApprovalWorkItem>(),
-            new Map<Id, ApprovalWorkItem>()
+        RCA_ApprovalWorkItemTriggerHandler.performDML(
+            new List<RCA_ApprovalWorkItemQuote__c>(),
+            new List<RCA_ApprovalWorkItemQuote__c>()
         );
-        
         Test.stopTest();
         
-        System.assert(true, 'Trigger and handler compile successfully');
+        Integer count = [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(0, count);
+    }
+    
+    // ========== RELEVANT CHANGES TEST ==========
+    
+    @isTest
+    static void testHasRelevantChanges_True() {
+        // Test with null oldRecord
+        Test.startTest();
+        Boolean result1 = RCA_ApprovalWorkItemTriggerHandler.hasRelevantChanges(null, null);
+        Test.stopTest();
+        
+        System.assertEquals(true, result1);
+    }
+    
+    @isTest
+    static void testHasRelevantChanges_WithRecords() {
+        // Create mock ApprovalWorkItem records (no DML)
+        Id fakeId = createFakeApprovalWorkItemId(1);
+        ApprovalWorkItem oldRecord = new ApprovalWorkItem(
+            Id = fakeId,
+            RelatedRecordId = fakeId,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Assigned',
+            AssignedToId = fakeId,
+            ApprovalChainName = 'Initial'
+        );
+        ApprovalWorkItem newRecord = new ApprovalWorkItem(
+            Id = fakeId,
+            RelatedRecordId = fakeId,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Approved', // changed
+            AssignedToId = fakeId,
+            ApprovalChainName = 'Initial'
+        );
+        
+        Test.startTest();
+        Boolean result = RCA_ApprovalWorkItemTriggerHandler.hasRelevantChanges(newRecord, oldRecord);
+        Test.stopTest();
+        
+        System.assertEquals(true, result, 'Status change should be detected as relevant');
+    }
+    
+    // ========== CONVERT TO DTO TESTS ==========
+    
+    @isTest
+    static void testConvertToDTO_InsertScenario() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        // Mixed list: valid Quote, non-Quote, and null RelatedRecordId
+        List<ApprovalWorkItem> records = new List<ApprovalWorkItem>();
+        
+        // Valid Quote-related record
+        records.add(new ApprovalWorkItem(
+            Id = createFakeApprovalWorkItemId(2),
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Assigned',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Quote Chain'
+        ));
+        
+        // Non-Quote record
+        records.add(new ApprovalWorkItem(
+            Id = createFakeApprovalWorkItemId(3),
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Opportunity',
+            Status = 'Assigned',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Opp Chain'
+        ));
+        
+        // Quote with null RelatedRecordId
+        records.add(new ApprovalWorkItem(
+            Id = createFakeApprovalWorkItemId(4),
+            RelatedRecordId = null,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Assigned',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Null Quote'
+        ));
+        
+        Test.startTest();
+        List<RCA_ApprovalWorkItemData> dtos = RCA_ApprovalWorkItemTriggerHandler.convertToDTO(records);
+        Test.stopTest();
+        
+        System.assertEquals(1, dtos.size(), 'Only valid Quote-related items should be converted');
+        System.assertEquals(testQuote.Id, dtos[0].relatedRecordId);
+    }
+    
+    @isTest
+    static void testConvertToDTO_UpdateScenario_WithOldMap() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        Id awiId = createFakeApprovalWorkItemId(5);
+        
+        ApprovalWorkItem oldRecord = new ApprovalWorkItem(
+            Id = awiId,
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Assigned',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Initial'
+        );
+        ApprovalWorkItem newRecord = new ApprovalWorkItem(
+            Id = awiId,
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Approved', // changed
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Initial'
+        );
+        
+        List<ApprovalWorkItem> records = new List<ApprovalWorkItem>{ newRecord };
+        Map<Id, ApprovalWorkItem> oldMap = new Map<Id, ApprovalWorkItem>{ awiId => oldRecord };
+        
+        Test.startTest();
+        List<RCA_ApprovalWorkItemData> dtos = RCA_ApprovalWorkItemTriggerHandler.convertToDTO(records, oldMap);
+        Test.stopTest();
+        
+        System.assertEquals(1, dtos.size(), 'Changed record should be converted');
+        System.assertEquals('Approved', dtos[0].status);
+    }
+    
+    // ========== WRAPPER METHOD TESTS (handleAfterInsert/Update) ==========
+    
+    @isTest
+    static void testHandleAfterInsert_QuoteItem() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        Id awiId = createFakeApprovalWorkItemId(6);
+        
+        ApprovalWorkItem awi = new ApprovalWorkItem(
+            Id = awiId,
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Assigned',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Wrapper Insert'
+        );
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemTriggerHandler.handleAfterInsert(new List<ApprovalWorkItem>{awi});
+        Test.stopTest();
+        
+        RCA_ApprovalWorkItemQuote__c junction = [
+            SELECT RCA_ApprovalWorkItemId__c, RCA_Status__c, RCA_Label__c
+            FROM RCA_ApprovalWorkItemQuote__c
+            WHERE RCA_ApprovalWorkItemId__c = :String.valueOf(awiId)
+            LIMIT 1
+        ];
+        System.assertEquals('Assigned', junction.RCA_Status__c);
+        System.assertEquals('Wrapper Insert', junction.RCA_Label__c);
+    }
+    
+    @isTest
+    static void testHandleAfterUpdate_QuoteItem() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        Id awiId = createFakeApprovalWorkItemId(7);
+        
+        // Simulate existing work item via insert wrapper
+        ApprovalWorkItem initialAwi = new ApprovalWorkItem(
+            Id = awiId,
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Assigned',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Initial Wrapper'
+        );
+        RCA_ApprovalWorkItemTriggerHandler.handleAfterInsert(new List<ApprovalWorkItem>{initialAwi});
+        
+        // Now simulate update with changed status
+        ApprovalWorkItem updatedAwi = new ApprovalWorkItem(
+            Id = awiId,
+            RelatedRecordId = testQuote.Id,
+            RelatedRecordObjectName = 'Quote',
+            Status = 'Approved',
+            AssignedToId = testUser.Id,
+            ApprovalChainName = 'Updated Wrapper'
+        );
+        Map<Id, ApprovalWorkItem> oldMap = new Map<Id, ApprovalWorkItem>{ awiId => initialAwi };
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemTriggerHandler.handleAfterUpdate(new List<ApprovalWorkItem>{updatedAwi}, oldMap);
+        Test.stopTest();
+        
+        RCA_ApprovalWorkItemQuote__c junction = [
+            SELECT RCA_ApprovalWorkItemId__c, RCA_Status__c, RCA_Label__c
+            FROM RCA_ApprovalWorkItemQuote__c
+            WHERE RCA_ApprovalWorkItemId__c = :String.valueOf(awiId)
+            LIMIT 1
+        ];
+        System.assertEquals('Approved', junction.RCA_Status__c);
+        System.assertEquals('Updated Wrapper', junction.RCA_Label__c);
+    }
+    
+    // ========== INTEGRATION TESTS ==========
+    
+    @isTest
+    static void testFullFlow_CreateAndUpdate() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        // Create
+        List<RCA_ApprovalWorkItemData> createData = new List<RCA_ApprovalWorkItemData>();
+        createData.add(createMockData('100', testQuote.Id, 'Assigned', testUser.Id, 'Initial'));
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(createData, false);
+        
+        RCA_ApprovalWorkItemQuote__c created = [SELECT Id, RCA_Status__c FROM RCA_ApprovalWorkItemQuote__c LIMIT 1];
+        System.assertEquals('Assigned', created.RCA_Status__c);
+        
+        // Update
+        List<RCA_ApprovalWorkItemData> updateData = new List<RCA_ApprovalWorkItemData>();
+        updateData.add(createMockData('100', testQuote.Id, 'Approved', testUser.Id, 'Final'));
+        
+        Test.startTest();
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(updateData, true);
+        Test.stopTest();
+        
+        RCA_ApprovalWorkItemQuote__c updated = [SELECT RCA_Status__c, RCA_Label__c FROM RCA_ApprovalWorkItemQuote__c WHERE Id = :created.Id];
+        System.assertEquals('Approved', updated.RCA_Status__c);
+        System.assertEquals('Final', updated.RCA_Label__c);
+    }
+    
+    @isTest
+    static void testMasterDetailCascadeDelete() {
+        Quote testQuote = [SELECT Id FROM Quote LIMIT 1];
+        User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        
+        List<RCA_ApprovalWorkItemData> data = new List<RCA_ApprovalWorkItemData>();
+        data.add(createMockData('200', testQuote.Id, 'Assigned', testUser.Id, 'Test'));
+        RCA_ApprovalWorkItemTriggerHandler.processWorkItems(data, false);
+        
+        Integer countBefore = [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(1, countBefore);
+        
+        Test.startTest();
+        delete testQuote;
+        Test.stopTest();
+        
+        Integer countAfter = [SELECT COUNT() FROM RCA_ApprovalWorkItemQuote__c];
+        System.assertEquals(0, countAfter, 'Master-Detail should cascade delete');
+    }
+    
+    // ========== HELPER METHODS ==========
+    
+    /**
+     * @description Creates a fake ApprovalWorkItem Id using the real key prefix (9jR)
+     *              This avoids DML while still producing Ids valid for the ApprovalWorkItem sObject type.
+     */
+    private static Id createFakeApprovalWorkItemId(Integer seed) {
+        // 3-char prefix + 15-char numeric suffix = 18-char Id
+        String suffix = String.valueOf(seed).leftPad(15, '0');
+        return (Id)('9jR' + suffix);
+    }
+    
+    private static RCA_ApprovalWorkItemData createMockData(
+        String suffix,
+        Id quoteId,
+        String status,
+        String assignedToId,
+        String chainName
+    ) {
+        String fakeId = '9jR' + String.valueOf(suffix).leftPad(15, '0');
+        RCA_ApprovalWorkItemData data = new RCA_ApprovalWorkItemData();
+        data.workItemId = (Id)fakeId;
+        data.relatedRecordId = quoteId;
+        data.relatedRecordObjectName = 'Quote';
+        data.status = status;
+        data.assignedToId = assignedToId;
+        data.approvalChainName = chainName;
+        return data;
     }
 }
