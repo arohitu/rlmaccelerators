@@ -54,8 +54,8 @@ _That’s it. No CLI. No scratch‑org gymnastics._
 
 | Accelerator | Version | Install Link | Docs |
 | ----------- | ------- | ------------ | ---- |
-| Advanced Approval Starter  | ![version](https://img.shields.io/static/v1?label=latest&message=1.4.0&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000516jAAA) | [/rca-approval/main/default/README.md](rca-approval/main/default/README.md) |
-| Advanced Approval Reports  | ![version](https://img.shields.io/static/v1?label=latest&message=1.0.0&color=informational) | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Ad3JAAS) | [/rca-aa-reports/README.md](rca-aa-reports/README.md) |
+| **Advanced Approval Starter** | `v1.4.0` | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000516jAAA) | [README](rca-approval/main/default/README.md) |
+| **Advanced Approval Reports** | `v1.0.0` | [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000Ad3JAAS) | [README](rca-aa-reports/README.md) |
 
 ---
 
