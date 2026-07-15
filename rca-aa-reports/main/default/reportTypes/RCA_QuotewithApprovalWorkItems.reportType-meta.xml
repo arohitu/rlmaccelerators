@@ -460,6 +460,11 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
+            <field>RCA_AssignedGroup__c</field>
+            <table>Quote.ApprovalWorkItemQuotes__r</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
             <field>RCA_Label__c</field>
             <table>Quote.ApprovalWorkItemQuotes__r</table>
         </columns>
