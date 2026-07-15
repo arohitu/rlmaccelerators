@@ -91,12 +91,15 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
         
         // Query existing junction records
         Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions = queryExistingJunctions(workItemIds);
+
+        // Resolve assignee display names (User or Queue/Group)
+        Map<String, String> assigneeNamesById = resolveAssigneeNames(validItems);
         
         // Prepare records for DML
         List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
         List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
         
-        prepareJunctionRecords(validItems, existingJunctions, toInsert, toUpdate);
+        prepareJunctionRecords(validItems, existingJunctions, assigneeNamesById, toInsert, toUpdate);
         
         // Perform DML
         performDML(toInsert, toUpdate);
@@ -138,7 +141,7 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
         
         for (RCA_ApprovalWorkItemQuote__c junction : [
             SELECT Id, RCA_ApprovalWorkItemId__c, RCA_Quote__c, 
-                   RCA_Status__c, RCA_AssignedToId__c, RCA_Label__c
+                   RCA_Status__c, RCA_AssignedToId__c, RCA_AssignedGroup__c, RCA_Label__c
             FROM RCA_ApprovalWorkItemQuote__c
             WHERE RCA_ApprovalWorkItemId__c IN :workItemIds
         ]) {
@@ -154,6 +157,7 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
     private static void prepareJunctionRecords(
         List<RCA_ApprovalWorkItemData> items,
         Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions,
+        Map<String, String> assigneeNamesById,
         List<RCA_ApprovalWorkItemQuote__c> toInsert,
         List<RCA_ApprovalWorkItemQuote__c> toUpdate
     ) {
@@ -163,11 +167,11 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
             if (existingJunctions.containsKey(workItemIdString)) {
                 // Update existing - but skip Quote field (Master-Detail can't be updated)
                 RCA_ApprovalWorkItemQuote__c existing = existingJunctions.get(workItemIdString);
-                updateJunctionFields(existing, item);
+                updateJunctionFields(existing, item, assigneeNamesById);
                 toUpdate.add(existing);
             } else {
                 // Create new
-                RCA_ApprovalWorkItemQuote__c newJunction = createJunctionRecord(item);
+                RCA_ApprovalWorkItemQuote__c newJunction = createJunctionRecord(item, assigneeNamesById);
                 toInsert.add(newJunction);
             }
         }
@@ -177,10 +181,15 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
      * @description Updates junction fields (excluding Master-Detail Quote field)
      */
     @TestVisible
-    private static void updateJunctionFields(RCA_ApprovalWorkItemQuote__c junction, RCA_ApprovalWorkItemData item) {
+    private static void updateJunctionFields(
+        RCA_ApprovalWorkItemQuote__c junction,
+        RCA_ApprovalWorkItemData item,
+        Map<String, String> assigneeNamesById
+    ) {
         // Don't update RCA_Quote__c - Master-Detail field can't be changed
         junction.RCA_Status__c = item.status;
-        junction.RCA_AssignedToId__c = item.assignedToId;
+        junction.RCA_AssignedToId__c = getUserAssigneeId(item.assignedToId);
+        junction.RCA_AssignedGroup__c = assigneeNamesById.get(item.assignedToId);
         junction.RCA_Label__c = item.approvalChainName;
     }
     
@@ -188,14 +197,79 @@ public with sharing class RCA_ApprovalWorkItemTriggerHandler {
      * @description Creates a new junction record
      */
     @TestVisible
-    private static RCA_ApprovalWorkItemQuote__c createJunctionRecord(RCA_ApprovalWorkItemData item) {
+    private static RCA_ApprovalWorkItemQuote__c createJunctionRecord(
+        RCA_ApprovalWorkItemData item,
+        Map<String, String> assigneeNamesById
+    ) {
         return new RCA_ApprovalWorkItemQuote__c(
             RCA_ApprovalWorkItemId__c = String.valueOf(item.workItemId),
             RCA_Quote__c = item.relatedRecordId,
             RCA_Status__c = item.status,
-            RCA_AssignedToId__c = item.assignedToId,
+            RCA_AssignedToId__c = getUserAssigneeId(item.assignedToId),
+            RCA_AssignedGroup__c = assigneeNamesById.get(item.assignedToId),
             RCA_Label__c = item.approvalChainName
         );
+    }
+
+    /**
+     * @description Returns the assignee Id if it points to a User, otherwise null.
+     *              This prevents FIELD_INTEGRITY_EXCEPTION when ApprovalWorkItem is assigned to a Queue/Group.
+     */
+    @TestVisible
+    private static Id getUserAssigneeId(String assignedToId) {
+        if (String.isBlank(assignedToId)) {
+            return null;
+        }
+        try {
+            Id assignee = (Id)assignedToId;
+            return assignee.getSObjectType() == User.SObjectType ? assignee : null;
+        } catch (Exception e) {
+            // If the Id cannot be cast or is not a valid User Id, leave lookup blank
+            return null;
+        }
+    }
+
+    /**
+     * @description Resolves display names for assignees (User or Group) in bulk.
+     *              Keyed by raw Id string so the map can be indexed with RCA_ApprovalWorkItemData.assignedToId.
+     */
+    @TestVisible
+    private static Map<String, String> resolveAssigneeNames(List<RCA_ApprovalWorkItemData> items) {
+        Map<String, String> namesById = new Map<String, String>();
+        Set<Id> assigneeIds = new Set<Id>();
+
+        for (RCA_ApprovalWorkItemData item : items) {
+            if (String.isBlank(item.assignedToId)) continue;
+            try {
+                assigneeIds.add((Id)item.assignedToId);
+            } catch (Exception e) {
+                // ignore invalid Ids
+            }
+        }
+
+        if (assigneeIds.isEmpty()) {
+            return namesById;
+        }
+
+        // Users
+        for (User u : [
+            SELECT Id, Name
+            FROM User
+            WHERE Id IN :assigneeIds
+        ]) {
+            namesById.put(String.valueOf(u.Id), u.Name);
+        }
+
+        // Groups / Queues
+        for (Group g : [
+            SELECT Id, Name
+            FROM Group
+            WHERE Id IN :assigneeIds
+        ]) {
+            namesById.put(String.valueOf(g.Id), g.Name);
+        }
+
+        return namesById;
     }
     
     /**

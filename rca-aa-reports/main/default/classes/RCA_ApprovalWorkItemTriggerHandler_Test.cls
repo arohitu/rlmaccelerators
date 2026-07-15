@@ -220,9 +220,10 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         Map<String, RCA_ApprovalWorkItemQuote__c> existingJunctions = new Map<String, RCA_ApprovalWorkItemQuote__c>();
         List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
         List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
+        Map<String, String> assigneeNames = RCA_ApprovalWorkItemTriggerHandler.resolveAssigneeNames(items);
         
         Test.startTest();
-        RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, existingJunctions, toInsert, toUpdate);
+        RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, existingJunctions, assigneeNames, toInsert, toUpdate);
         Test.stopTest();
         
         System.assertEquals(1, toInsert.size());
@@ -252,9 +253,10 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         
         List<RCA_ApprovalWorkItemQuote__c> toInsert = new List<RCA_ApprovalWorkItemQuote__c>();
         List<RCA_ApprovalWorkItemQuote__c> toUpdate = new List<RCA_ApprovalWorkItemQuote__c>();
+        Map<String, String> assigneeNames = RCA_ApprovalWorkItemTriggerHandler.resolveAssigneeNames(items);
         
         Test.startTest();
-        RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, existingJunctions, toInsert, toUpdate);
+        RCA_ApprovalWorkItemTriggerHandler.prepareJunctionRecords(items, existingJunctions, assigneeNames, toInsert, toUpdate);
         Test.stopTest();
         
         System.assertEquals(0, toInsert.size());
@@ -278,9 +280,12 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         insert junction;
         
         RCA_ApprovalWorkItemData updateData = createMockData('001', testQuote.Id, 'Approved', testUser.Id, 'New');
+        Map<String, String> assigneeNames = new Map<String, String>{
+            String.valueOf(updateData.assignedToId) => [SELECT Name FROM User WHERE Id = :testUser.Id].Name
+        };
         
         Test.startTest();
-        RCA_ApprovalWorkItemTriggerHandler.updateJunctionFields(junction, updateData);
+        RCA_ApprovalWorkItemTriggerHandler.updateJunctionFields(junction, updateData, assigneeNames);
         Test.stopTest();
         
         System.assertEquals('Approved', junction.RCA_Status__c);
@@ -298,9 +303,12 @@ private class RCA_ApprovalWorkItemTriggerHandler_Test {
         User testUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
         
         RCA_ApprovalWorkItemData data = createMockData('001', testQuote.Id, 'Assigned', testUser.Id, 'Test Chain');
+        Map<String, String> assigneeNames = new Map<String, String>{
+            String.valueOf(data.assignedToId) => [SELECT Name FROM User WHERE Id = :testUser.Id].Name
+        };
         
         Test.startTest();
-        RCA_ApprovalWorkItemQuote__c junction = RCA_ApprovalWorkItemTriggerHandler.createJunctionRecord(data);
+        RCA_ApprovalWorkItemQuote__c junction = RCA_ApprovalWorkItemTriggerHandler.createJunctionRecord(data, assigneeNames);
         Test.stopTest();
         
         System.assertNotEquals(null, junction);

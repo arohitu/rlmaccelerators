@@ -91,7 +91,8 @@ Junction object with the following fields:
 - **RCA_ApprovalWorkItemId__c** - Required external ID text field (18 chars) storing ApprovalWorkItem ID
 - **RCA_Quote__c** - Master-Detail relationship to Quote (controls sharing and cascade delete)
 - **RCA_Status__c** - Picklist (Assigned, Approved, Canceled, Errored, Recalled, Rejected, Withdrawn)
-- **RCA_AssignedToId__c** - Text field (18 chars) storing User/Group ID of assigned approver
+- **RCA_AssignedToId__c** - Lookup(User) field storing the assigned **user** (blank when assigned to a queue/group)
+- **RCA_AssignedGroup__c** - Text field storing the **queue/group name** when the ApprovalWorkItem is assigned to a non‑user
 - **RCA_Label__c** - Text field (255 chars) storing Approval Chain Name
 
 ### Triggers
@@ -133,10 +134,11 @@ A permission set providing read-only access for reporting purposes:
   - Read access to ApprovalWorkItem
   - Read access to Quote, Opportunity, and Account (required for Master-Detail chain)
 - **Field Access:**
-  - Read access to RCA_Status__c
-  - Read access to RCA_AssignedToId__c  
-  - Read access to RCA_Label__c
-  - Required fields (RCA_ApprovalWorkItemId__c, RCA_Quote__c) are accessible by default
+   - Read access to RCA_Status__c
+   - Read access to RCA_AssignedToId__c (Assigned User)  
+   - Read access to RCA_AssignedGroup__c (Assigned Group/Queue Name)  
+   - Read access to RCA_Label__c
+   - Required fields (RCA_ApprovalWorkItemId__c, RCA_Quote__c) are accessible by default
 
 **Usage:** Assign this permission set to users who need to create and view approval reports but don't need edit access.
 
@@ -165,7 +167,7 @@ After installing this package, users can:
 
 1. **Create custom reports** - Use the custom report type "Quote with Approval Work Items"
 2. **Access Quote fields** - Include Quote Number, Name, Status, Amount, Account, Opportunity, etc.
-3. **Access Approval fields** - Status, Assigned To, and Approval Chain Name stored directly on junction object
+3. **Access Approval fields** - Status, Assigned User, Assigned Group (queue), and Approval Chain Name stored directly on the junction object
 4. **Cross-object reporting** - Join to Account, Opportunity, Product, and other objects through the Quote relationship
 5. **Build comprehensive dashboards** - Create approval metrics with full Quote context
 6. **No lookup traversal required** - Key fields copied to junction object for better report performance
@@ -214,10 +216,10 @@ After installing this package, users can:
 
 Install the managed package using the installation URL:
 
-**Latest Version:** 1.0.0-1  
+**Latest Version:** 1.3.0-1  
 **Installation URLs:**
-- **Production:** https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000AeKLAA0
-- **Sandbox:** https://test.salesforce.com/packaging/installPackage.apexp?p0=04td2000000AeKLAA0
+- **Production:** https://login.salesforce.com/packaging/installPackage.apexp?p0=04td2000000B6LRAA0
+- **Sandbox:** https://test.salesforce.com/packaging/installPackage.apexp?p0=04td2000000B6LRAA0
 
 **Installation Steps:**
 1. Click the appropriate installation URL for your org type (Production or Sandbox)

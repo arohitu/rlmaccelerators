@@ -16,6 +16,19 @@
         <field>RCA_ApprovalWorkItemQuote__c.RCA_Status__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>RCA_ApprovalWorkItemQuote__c.RCA_AssignedGroup__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <classAccesses>
+        <apexClass>RCA_ApprovalWorkItemTriggerHandler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RCA_ApprovalWorkItemData</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Approval Report Viewer</label>
     <objectPermissions>

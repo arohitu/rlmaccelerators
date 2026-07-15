@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RCA_AssignedGroup__c</fullName>
+    <label>Assigned Group</label>
+    <description>Queue/Group name assigned to the approval work item. Populated when ApprovalWorkItem.AssignedToId points to a non-User (e.g., Queue).</description>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>
+
+
